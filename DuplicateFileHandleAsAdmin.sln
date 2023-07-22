@@ -5,6 +5,13 @@ VisualStudioVersion = 17.6.33801.468
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DuplicateFileHandleAsAdmin", "DuplicateFileHandleAsAdmin\DuplicateFileHandleAsAdmin.vcxproj", "{61C0EF08-4853-4915-B93D-C6AE2D153469}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7DCC75EA-43A9-4E77-867C-B0465E755D1A}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		props.props = props.props
+		UTF8Manifest.xml = UTF8Manifest.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
