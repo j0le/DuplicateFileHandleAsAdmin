@@ -1,20 +1,36 @@
-// DuplicateFileHandleAsAdmin.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
-#include <iostream>
+
+#define WIN32_LEAN_AND_MEAN 1
+#include <Windows.h>
+
+#include <io.h>
+#include <fcntl.h>
+
+#include <fmt/core.h>
 
 int main()
 {
-	std::cout << "Hello World!\n";
+	_set_fmode(_O_BINARY);
+	_setmode(_fileno(stdout), _O_BINARY);
+	_setmode(_fileno(stdin), _O_BINARY);
+
+	if (GetACP() != 65001) {
+		fmt::print(stderr, "The Active Code Page (ACP) for this process is not UTF-8 (65001).\n"
+			"Command line parsing is not supported.\n"
+			"Your version of Windows might be to old, so that the manifest embedded in the executable is not read. "
+			"The manifest specifies, that this executable wants UTF-8 as ACP.\n"
+			"As a workaround you can activate \"Beta: Use Unicode UTF-8 for worldwide language support\":\n"
+			"  - Press Win+R\n"
+			"  - Type \"intl.cpl\"\n"
+			"  - Goto Tab \"Administrative\"\n"
+			"  - Click on \"Change system locale\"\n"
+			"  - Set Checkbox \"Beta: Use Unicode UTF-8 for worldwide language support\"\n"
+			"\n");
+		return 1;
+	}
+
+
+	fmt::print(stdout, "Hello World!\n");
+	return 0;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
