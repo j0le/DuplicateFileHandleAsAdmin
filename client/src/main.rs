@@ -66,7 +66,7 @@ fn main() -> std::io::Result<()>{
         let shell_exec_result = unsafe {
             ShellExecuteW(
                 hwnd,
-                PCWSTR::null(),//PCWSTR::from_raw(runas.as_ptr()),
+                PCWSTR::from_raw(runas.as_ptr()),
                 PCWSTR::from_raw(prog.as_ptr()),
                 PCWSTR::from_raw(os_parameters.as_ptr()),
                 PCWSTR::null(),
