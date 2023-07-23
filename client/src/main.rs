@@ -81,6 +81,19 @@ fn main() -> std::io::Result<()>{
     let mut buf : [u8; 8]= [0u8; 8];
     pipe.read_exact(&mut buf)?;
 
-    println!("the result is {:?}", buf);
+    let handle_as_unsigned_integer = u64::from_ne_bytes(buf);
+
+    {
+        use std::os::windows::io::FromRawHandle;
+        use std::fs::File;
+
+        let h_file : std::os::windows::io::RawHandle = unsafe {std::mem::transmute_copy(&handle_as_unsigned_integer)};
+
+        let mut f = unsafe{File::from_raw_handle(h_file)};
+
+        write!(&mut f, "Let’s write to the file, hey!")?;
+        f.sync_data()?;
+    }
+
     Result::Ok(())
 }
