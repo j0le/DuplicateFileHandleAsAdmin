@@ -92,7 +92,26 @@ namespace helper {
 }
 
 struct handle_wrapper {
+	HANDLE h{INVALID_HANDLE_VALUE};
 
+	bool CheckedClose() {
+		if (h == INVALID_HANDLE_VALUE)
+			return true;
+		
+		bool ret = CloseHandle(h);
+		h = INVALID_HANDLE_VALUE;
+		return ret;
+	}
+
+	HANDLE Extract() {
+		HANDLE ret = h;
+		h = INVALID_HANDLE_VALUE;
+		return ret;
+	}
+
+	~handle_wrapper() {
+		CheckedClose();
+	}
 };
 
 int main(int argc, const char** argv)
@@ -115,15 +134,16 @@ int main(int argc, const char** argv)
 			"\n");
 		return 1;
 	}
+	decltype(GetLastError()) last_error{};
 
 	const char* const prog = argc <= 0 ? "dfhaa.exe" : argv[0];
 
 	fmt::print(stderr,
 		"Usage:\n"
-		"  \"{}\" <PID> <FILE>\n\n", 
+		"  \"{}\" <PID> <FILE> <NAMED_PIPE>\n\n", 
 		prog);
 
-	if (argc < 3) {
+	if (argc < 4) {
 		fmt::print(stderr, "Error: Not Enough arguments.\n");
 		return 1;
 	}
@@ -135,20 +155,41 @@ int main(int argc, const char** argv)
 	}
 	static_assert(sizeof DWORD == sizeof (decltype(pid_opt)::value_type));
 
-	HANDLE hProcess = OpenProcess(PROCESS_DUP_HANDLE, false, *pid_opt);
-	if (hProcess == nullptr || hProcess == INVALID_HANDLE_VALUE) {
+	handle_wrapper hwProcess{ .h = OpenProcess(PROCESS_DUP_HANDLE, false, *pid_opt) };
+	if (hwProcess.h == INVALID_HANDLE_VALUE) {
 		auto last_error = GetLastError();
 		fmt::print(stderr, "Error: OpenProcess failed with {}\n", last_error);
 		return 1;
 	}
 
+	std::string_view named_pipe_name{argv[3]};
+	auto utf16_named_pipe_name = nowide::widen(named_pipe_name);
+
+	handle_wrapper hwPipe{};
+	while (true) {
+		hwPipe.h = CreateFileW(utf16_named_pipe_name.c_str(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+		if (hwPipe.h != INVALID_HANDLE_VALUE)
+			break;
+		last_error = GetLastError();
+		if (last_error != ERROR_PIPE_BUSY) {
+			fmt::print(stderr, "Error: Failed to open pipe. Last error {}.\n", last_error);
+			return 1;
+		}
+
+		if (!WaitNamedPipeW(utf16_named_pipe_name.c_str(), 20000)) {
+			fmt::print(stderr, "Error: Could not open pipe. (20 seconds timeout).");
+			return 1;
+		}
+	}
+
+
 	std::string_view file_name{argv[2]};
 	auto utf16_file_name = nowide::widen(file_name);
 
-	HANDLE hFile = CreateFileW(utf16_file_name.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+	handle_wrapper hwFile{ .h = CreateFileW(utf16_file_name.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr) };
 
-	auto last_error = GetLastError();
-	if (hFile == nullptr || hFile == INVALID_HANDLE_VALUE) {
+	last_error = GetLastError();
+	if (hwFile.h == INVALID_HANDLE_VALUE) {
 		fmt::print(stderr, "Error: CreateFileW failed with {}\n", last_error);
 		return 1;
 	}
@@ -164,12 +205,13 @@ int main(int argc, const char** argv)
 		break;
 	}
 
-	HANDLE hDupFile{};
-	if (!DuplicateHandle(GetCurrentProcess(), hFile, hProcess, &hDupFile, 0, false, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
-		auto last_error = GetLastError();
+	HANDLE hDupFile{}; // don't use handle_wrapper, because it is a handle of another process.
+	if (!DuplicateHandle(GetCurrentProcess(), hwFile.h, hwProcess.h, &hDupFile, 0, false, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE)) {
+		last_error = GetLastError();
 		fmt::print(stderr, "Error: DuplicateHandle failed with {}\n", last_error);
 		return 1;
 	}
+	(void)hwFile.Extract(); // drop, because we closed it with DUPLICATE_CLOSE_SOURCE
 
 
 	auto handle_as_number = std::bit_cast<uintptr_t>(hDupFile);
