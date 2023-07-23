@@ -218,6 +218,18 @@ int main(int argc, const char** argv)
 	fmt::print(stderr, "In the target process the handle is:\n");
 	fmt::print(stdout, "{:x}", handle_as_number);
 
+	BYTE buffer[sizeof(handle_as_number)]{};
+	std::memcpy(buffer, &handle_as_number, sizeof(handle_as_number));
+	DWORD written{};
+	if (!WriteFile(hwPipe.h, buffer, sizeof(buffer), &written, nullptr) ) {
+		fmt::print(stderr, "Error: Failed to write to pipe. last error {}\n", GetLastError());
+		return 1;
+	}
+	if (written != sizeof(buffer)) {
+		fmt::print(stderr, "Error: Not enough written.\n");
+		return 1;
+	}
+
 	return 0;
 }
 
