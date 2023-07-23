@@ -138,6 +138,7 @@ int main(int argc, const char** argv)
 
 	const char* const prog = argc <= 0 ? "dfhaa.exe" : argv[0];
 
+	// TODO: Remove third parameter <NAMED_PIPE> and construct pipe name from process id (<PID>)
 	fmt::print(stderr,
 		"Usage:\n"
 		"  \"{}\" <PID> <FILE> <NAMED_PIPE>\n\n", 
