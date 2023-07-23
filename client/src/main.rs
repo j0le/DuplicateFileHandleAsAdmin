@@ -61,12 +61,19 @@ fn main() -> std::io::Result<()>{
         let parameters = format!("{}  \"{}\"     \"\\\\.\\pipe\\{}\"", pid, "C:\\Users\\ols3\\Desktop\\moin.txt", pipe_name);
         let os_parameters : Vec<u16> = OsStr::new(&parameters).encode_wide().chain(once(0u16)).collect();
 
+        let as_admin : bool = false;
+        let operation = if as_admin {
+            PCWSTR::from_raw(runas.as_ptr())
+        } else {
+            PCWSTR::null()
+        };
+
         let hwnd = HWND(0);
         // TODO: handle the result of SehllExecuteW
         let shell_exec_result = unsafe {
             ShellExecuteW(
                 hwnd,
-                PCWSTR::from_raw(runas.as_ptr()),
+                operation,
                 PCWSTR::from_raw(prog.as_ptr()),
                 PCWSTR::from_raw(os_parameters.as_ptr()),
                 PCWSTR::null(),
