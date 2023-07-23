@@ -62,6 +62,7 @@ fn main() -> std::io::Result<()>{
         let os_parameters : Vec<u16> = OsStr::new(&parameters).encode_wide().chain(once(0u16)).collect();
 
         let hwnd = HWND(0);
+        // TODO: handle the result of SehllExecuteW
         let shell_exec_result = unsafe {
             ShellExecuteW(
                 hwnd,
