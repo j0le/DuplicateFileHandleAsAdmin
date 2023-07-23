@@ -87,8 +87,9 @@ fn main() -> std::io::Result<()>{
     {
         use std::os::windows::io::FromRawHandle;
         use std::fs::File;
+        use std::os::windows::io::RawHandle;
 
-        let h_file : std::os::windows::io::RawHandle = unsafe {std::mem::transmute_copy(&handle_as_unsigned_integer)};
+        let h_file : RawHandle = handle_as_unsigned_integer as RawHandle;
 
         let mut f = unsafe{File::from_raw_handle(h_file)};
 
