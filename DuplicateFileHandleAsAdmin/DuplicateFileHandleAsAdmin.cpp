@@ -153,16 +153,17 @@ int main(int argc, const char** argv)
 		fmt::print(stderr, "Error: Couldn't parse PID.\n");
 		return 1;
 	}
+	auto pid = pid_opt.value();
 	static_assert(sizeof DWORD == sizeof (decltype(pid_opt)::value_type));
 
-	handle_wrapper hwProcess{ .h = OpenProcess(PROCESS_DUP_HANDLE, false, *pid_opt) };
+	handle_wrapper hwProcess{ .h = OpenProcess(PROCESS_DUP_HANDLE, false, pid) };
 	if (hwProcess.h == INVALID_HANDLE_VALUE) {
 		auto last_error = GetLastError();
 		fmt::print(stderr, "Error: OpenProcess failed with {}\n", last_error);
 		return 1;
 	}
 
-	const auto named_pipe_name = fmt::format(R"~~(\\.\pipe\dfhaa_{})~~", *pid_opt);
+	const auto named_pipe_name = fmt::format(R"~~(\\.\pipe\dfhaa_{})~~", pid);
 	const auto utf16_named_pipe_name = nowide::widen(named_pipe_name);
 
 	handle_wrapper hwPipe{};
