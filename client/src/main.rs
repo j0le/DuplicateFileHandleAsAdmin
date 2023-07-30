@@ -40,10 +40,10 @@ fn main() -> std::io::Result<()>{
     //println!("status: {}", output.status);
     //std::io::stdout().write_all(&output.stdout).unwrap();
 
-    let pipe_name = "moin_tach";
+    let pipe_name : String = format!("dfhaa_{}", pid);
 
     let pipe_listener = named_pipe::PipeListenerOptions::new()
-        .name(OsStr::new(pipe_name))
+        .name(OsStr::new(&pipe_name))
         .mode(named_pipe::PipeMode::Bytes)
         .instance_limit(NonZeroU8::new(2))
         .accept_remote(false)
@@ -58,7 +58,7 @@ fn main() -> std::io::Result<()>{
         let runas: [u16; 6] = [0x72u16, 0x75u16, 0x6eu16, 0x61u16, 0x73u16, 0u16];
         let prog : Vec<u16> = OsStr::new(prog_dup_file_handle_as_admin).encode_wide().chain(once(0u16)).collect();
 
-        let parameters = format!("{}  \"{}\"     \"\\\\.\\pipe\\{}\"", pid, "C:\\Users\\ols3\\Desktop\\moin.txt", pipe_name);
+        let parameters : String = format!("{}  \"{}\"", pid, "C:\\Users\\ols3\\Desktop\\moin.txt");
         let os_parameters : Vec<u16> = OsStr::new(&parameters).encode_wide().chain(once(0u16)).collect();
 
         let as_admin : bool = false;

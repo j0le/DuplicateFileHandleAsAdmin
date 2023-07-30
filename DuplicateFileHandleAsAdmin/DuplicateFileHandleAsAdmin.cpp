@@ -138,13 +138,12 @@ int main(int argc, const char** argv)
 
 	const char* const prog = argc <= 0 ? "dfhaa.exe" : argv[0];
 
-	// TODO: Remove third parameter <NAMED_PIPE> and construct pipe name from process id (<PID>)
 	fmt::print(stderr,
 		"Usage:\n"
-		"  \"{}\" <PID> <FILE> <NAMED_PIPE>\n\n", 
+		"  \"{}\" <PID> <FILE>\n\n", 
 		prog);
 
-	if (argc < 4) {
+	if (argc < 3) {
 		fmt::print(stderr, "Error: Not Enough arguments.\n");
 		return 1;
 	}
@@ -163,8 +162,8 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 
-	std::string_view named_pipe_name{argv[3]};
-	auto utf16_named_pipe_name = nowide::widen(named_pipe_name);
+	const auto named_pipe_name = fmt::format(R"~~(\\.\pipe\dfhaa_{})~~", *pid_opt);
+	const auto utf16_named_pipe_name = nowide::widen(named_pipe_name);
 
 	handle_wrapper hwPipe{};
 	while (true) {
@@ -173,7 +172,7 @@ int main(int argc, const char** argv)
 			break;
 		last_error = GetLastError();
 		if (last_error != ERROR_PIPE_BUSY) {
-			fmt::print(stderr, "Error: Failed to open pipe. Last error {}.\n", last_error);
+			fmt::print(stderr, "Error: Failed to open pipe \"{}\". Last error {}.\n", named_pipe_name, last_error);
 			return 1;
 		}
 
